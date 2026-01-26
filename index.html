@@ -211,6 +211,12 @@
             border-bottom: 1px solid var(--table-border);
             padding: 8px 0;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .history-item input {
+            margin-right: 8px;
         }
 
         .history-item:hover {
@@ -247,7 +253,7 @@
             color: white;
         }
 
-        .delete-all {
+        .delete-all, .delete-selected {
             background-color: #c0392b;
             color: white;
             margin-top: 10px;
@@ -491,6 +497,7 @@
     <div id="history-panel">
         <h3>Saved Outputs</h3>
         <div id="history-list"></div>
+        <button class="delete-selected" onclick="promptDeleteSelected()">Delete Selected</button>
         <button class="delete-all" onclick="promptDeleteAll()">Delete All</button>
     </div>
 
@@ -516,6 +523,7 @@
     <script>
         let debounceTimer;
         let history = JSON.parse(localStorage.getItem('tradingHistory') || '[]');
+        let selectedOrder = [];
 
         document.addEventListener('click', (e) => {
             const panel = document.getElementById('history-panel');
@@ -593,6 +601,7 @@
                 const div = document.createElement('div');
                 div.className = 'history-item';
                 div.innerHTML = `
+                    <input type="checkbox" class="history-checkbox" data-index="${index}">
                     <div class="title">${item.name}</div>
                     <div class="history-actions">
                         <button class="view-btn" onclick="viewHistory(${index})">View</button>
@@ -601,6 +610,36 @@
                 `;
                 list.appendChild(div);
             });
+
+            const checkboxes = document.querySelectorAll('.history-checkbox');
+            checkboxes.forEach(cb => {
+                const idx = parseInt(cb.dataset.index);
+                cb.checked = selectedOrder.includes(idx);
+                cb.addEventListener('change', handleCheckboxChange);
+            });
+        }
+
+        function handleCheckboxChange(e) {
+            const index = parseInt(e.target.dataset.index);
+            if (e.target.checked) {
+                if (!selectedOrder.includes(index)) {
+                    selectedOrder.push(index);
+                }
+            } else {
+                selectedOrder = selectedOrder.filter(i => i !== index);
+            }
+            updateSelectedView();
+        }
+
+        function updateSelectedView() {
+            if (selectedOrder.length === 0) {
+                return;
+            }
+            let combinedHtml = '';
+            selectedOrder.forEach(idx => {
+                combinedHtml += history[idx].html;
+            });
+            document.getElementById('output-section').innerHTML = combinedHtml;
         }
 
         function viewHistory(index) {
@@ -609,9 +648,29 @@
         }
 
         function promptDelete(index) {
-            showConfirm('Are you sure you want to delete this output?', () => {
+            showConfirm(`Are you sure you want to delete "${history[index].name}"?`, () => {
                 history.splice(index, 1);
                 localStorage.setItem('tradingHistory', JSON.stringify(history));
+                selectedOrder = selectedOrder.filter(i => i !== index);
+                loadHistory();
+                showPopup('delete-popup');
+            });
+        }
+
+        function promptDeleteSelected() {
+            if (selectedOrder.length === 0) {
+                alert('No items selected.');
+                return;
+            }
+            const names = selectedOrder.map(idx => history[idx].name);
+            const namesStr = names.join(', ');
+            showConfirm(`Are you sure you want to delete these outputs: ${namesStr}?`, () => {
+                selectedOrder.sort((a, b) => b - a);
+                selectedOrder.forEach(idx => {
+                    history.splice(idx, 1);
+                });
+                localStorage.setItem('tradingHistory', JSON.stringify(history));
+                selectedOrder = [];
                 loadHistory();
                 showPopup('delete-popup');
             });
@@ -621,6 +680,7 @@
             showConfirm('Are you sure you want to delete all outputs?', () => {
                 history = [];
                 localStorage.setItem('tradingHistory', JSON.stringify(history));
+                selectedOrder = [];
                 loadHistory();
                 showPopup('delete-popup');
             });
@@ -670,91 +730,24 @@
 
                 let currentModel = null;
                 let currentData = [];
-                let sectionCount = 0;
+                let modelsData = new Map();
 
-                function flushCurrentSection() {
-                    if (currentData.length > 0 || currentModel) {
-                        sectionCount++;
-                        const sectionDiv = document.createElement('div');
-                        sectionDiv.className = 'model-section';
-
-                        const infoDiv = document.createElement('div');
-                        infoDiv.className = 'model-info';
-
-                        let shortTitle = currentModel || `Section ${sectionCount}`;
-                        if (currentModel) {
-                            shortTitle = currentModel.replace(/\s*\(Last Data:[^)]+\)/i, '').trim();
-                        }
-
-                        infoDiv.textContent = shortTitle;
-                        sectionDiv.appendChild(infoDiv);
-
-                        const table = document.createElement('table');
-                        const thead = document.createElement('thead');
-                        const tbody = document.createElement('tbody');
-
-                        const headerRow = document.createElement('tr');
-                        displayHeaders.forEach(h => {
-                            const th = document.createElement('th');
-                            th.textContent = h;
-                            headerRow.appendChild(th);
-                        });
-                        thead.appendChild(headerRow);
-
-                        currentData.forEach((line, idx) => {
-                            const values = line.split(/\s+/).filter(v => v !== '');
-                            if (values.length !== 8) {
-                                throw new Error(`Section "${shortTitle}": row ${idx + 1} has ${values.length} values (expected 8)`);
+                function collectSection() {
+                    if (currentModel && currentData.length > 0) {
+                        const existing = modelsData.get(currentModel);
+                        if (existing) {
+                            if (existing.length !== currentData.length) {
+                                throw new Error(`Duplicate model "${currentModel}" with different data length`);
                             }
-
-                            const openVal     = parseFloat(values[0]);
-                            const closeVal    = parseFloat(values[1]);
-                            const hmaOpenVal  = parseFloat(values[2]);
-                            const hmaCloseVal = parseFloat(values[3]);
-
-                            let ohlcSignal = 'E';
-                            if (closeVal > openVal) ohlcSignal = 'B';
-                            else if (closeVal < openVal) ohlcSignal = 'S';
-
-                            let hmaSignal = 'E';
-                            if (hmaCloseVal > hmaOpenVal) hmaSignal = 'B';
-                            else if (hmaCloseVal < hmaOpenVal) hmaSignal = 'S';
-
-                            const signal = ohlcSignal + hmaSignal;
-
-                            const displayValues = [values[0], values[1], values[2], values[3], signal];
-
-                            const row = document.createElement('tr');
-                            displayValues.forEach((val, colIdx) => {
-                                const td = document.createElement('td');
-                                if (colIdx === 4) {
-                                    const span1 = document.createElement('span');
-                                    span1.textContent = ohlcSignal;
-                                    span1.className = ohlcSignal;
-
-                                    const span2 = document.createElement('span');
-                                    span2.textContent = hmaSignal;
-                                    span2.className = hmaSignal;
-
-                                    const container = document.createElement('span');
-                                    container.className = 'signal';
-                                    container.appendChild(span1);
-                                    container.appendChild(span2);
-
-                                    td.appendChild(container);
-                                } else {
-                                    td.textContent = val;
+                            for (let i = 0; i < existing.length; i++) {
+                                if (existing[i] !== currentData[i]) {
+                                    throw new Error(`Duplicate model "${currentModel}" with different data values`);
                                 }
-                                row.appendChild(td);
-                            });
-                            tbody.appendChild(row);
-                        });
-
-                        table.appendChild(thead);
-                        table.appendChild(tbody);
-                        sectionDiv.appendChild(table);
-                        outputSection.appendChild(sectionDiv);
-
+                            }
+                            // If same, skip adding again
+                        } else {
+                            modelsData.set(currentModel, [...currentData]);
+                        }
                         currentData = [];
                     }
                 }
@@ -769,7 +762,7 @@
                         if (before.length > 0 && currentModel) {
                             currentData.push(before);
                         }
-                        flushCurrentSection();
+                        collectSection();
                         currentModel = title;
                         const after = line.substring(match.index + title.length).trim();
                         if (after.length > 0) {
@@ -782,10 +775,95 @@
                     }
                 }
 
-                flushCurrentSection();
+                collectSection();
 
-                if (sectionCount === 0) {
+                if (modelsData.size === 0) {
                     throw new Error('No valid model sections or data rows found.');
+                }
+
+                // Now render the unique sections
+                let sectionCount = 0;
+                for (let [currentModel, currentData] of modelsData) {
+                    sectionCount++;
+                    const sectionDiv = document.createElement('div');
+                    sectionDiv.className = 'model-section';
+
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'model-info';
+
+                    let shortTitle = currentModel || `Section ${sectionCount}`;
+                    if (currentModel) {
+                        shortTitle = currentModel.replace(/\s*\(Last Data:[^)]+\)/i, '').trim();
+                    }
+
+                    infoDiv.textContent = shortTitle;
+                    sectionDiv.appendChild(infoDiv);
+
+                    const table = document.createElement('table');
+                    const thead = document.createElement('thead');
+                    const tbody = document.createElement('tbody');
+
+                    const headerRow = document.createElement('tr');
+                    displayHeaders.forEach(h => {
+                        const th = document.createElement('th');
+                        th.textContent = h;
+                        headerRow.appendChild(th);
+                    });
+                    thead.appendChild(headerRow);
+
+                    currentData.forEach((line, idx) => {
+                        const values = line.split(/\s+/).filter(v => v !== '');
+                        if (values.length !== 8) {
+                            throw new Error(`Section "${shortTitle}": row ${idx + 1} has ${values.length} values (expected 8)`);
+                        }
+
+                        const openVal     = parseFloat(values[0]);
+                        const closeVal    = parseFloat(values[1]);
+                        const hmaOpenVal  = parseFloat(values[2]);
+                        const hmaCloseVal = parseFloat(values[3]);
+
+                        let ohlcSignal = 'E';
+                        if (closeVal > openVal) ohlcSignal = 'B';
+                        else if (closeVal < openVal) ohlcSignal = 'S';
+
+                        let hmaSignal = 'E';
+                        if (hmaCloseVal > hmaOpenVal) hmaSignal = 'B';
+                        else if (hmaCloseVal < hmaOpenVal) hmaSignal = 'S';
+
+                        const signal = ohlcSignal + hmaSignal;
+
+                        const displayValues = [values[0], values[1], values[2], values[3], signal];
+
+                        const row = document.createElement('tr');
+                        displayValues.forEach((val, colIdx) => {
+                            const td = document.createElement('td');
+                            if (colIdx === 4) {
+                                const span1 = document.createElement('span');
+                                span1.textContent = ohlcSignal;
+                                span1.className = ohlcSignal;
+
+                                const span2 = document.createElement('span');
+                                span2.textContent = hmaSignal;
+                                span2.className = hmaSignal;
+
+                                const container = document.createElement('span');
+                                container.className = 'signal';
+                                container.appendChild(span1);
+                                container.appendChild(span2);
+
+                                td.appendChild(container);
+                            } else {
+                                td.textContent = val;
+                            }
+                            row.appendChild(td);
+                        });
+                        tbody.appendChild(row);
+                    });
+
+                    table.appendChild(thead);
+                    table.appendChild(tbody);
+                    sectionDiv.appendChild(table);
+                    outputSection.appendChild(sectionDiv);
                 }
             } catch (err) {
                 errorDiv.textContent = 'Error: ' + err.message;
