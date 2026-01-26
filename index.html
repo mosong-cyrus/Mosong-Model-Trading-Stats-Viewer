@@ -253,11 +253,17 @@
 
         .signal {
             font-weight: bold;
+            display: inline-flex;
+            gap: 1px;
         }
 
-        .signal-B { color: #27ae60; }
-        .signal-S { color: #e74c3c; }
-        .signal-E { color: #f39c12; }
+        .signal span {
+            min-width: 0.8em;
+        }
+
+        .B { color: #27ae60; }   /* green */
+        .S { color: #e74c3c; }   /* red */
+        .E { color: #f39c12; }   /* orange */
 
         .error {
             color: #e74c3c;
@@ -382,12 +388,24 @@
                             const row = document.createElement('tr');
                             displayValues.forEach((val, colIdx) => {
                                 const td = document.createElement('td');
-                                td.textContent = val;
                                 if (colIdx === 4) {
-                                    td.className = 'signal';
-                                    if (ohlcSignal === 'B') td.classList.add('signal-B');
-                                    else if (ohlcSignal === 'S') td.classList.add('signal-S');
-                                    else td.classList.add('signal-E');
+                                    // Split signal into two colored letters
+                                    const span1 = document.createElement('span');
+                                    span1.textContent = ohlcSignal;
+                                    span1.className = ohlcSignal;
+
+                                    const span2 = document.createElement('span');
+                                    span2.textContent = hmaSignal;
+                                    span2.className = hmaSignal;
+
+                                    const container = document.createElement('span');
+                                    container.className = 'signal';
+                                    container.appendChild(span1);
+                                    container.appendChild(span2);
+
+                                    td.appendChild(container);
+                                } else {
+                                    td.textContent = val;
                                 }
                                 row.appendChild(td);
                             });
@@ -476,7 +494,7 @@
             textarea.focus();
             textarea.setSelectionRange(1, 1);
 
-            // Manual button still works even when auto is off
+            // Manual button
             document.getElementById('arrangeBtn').addEventListener('click', parseAndShowTables);
         });
     </script>
