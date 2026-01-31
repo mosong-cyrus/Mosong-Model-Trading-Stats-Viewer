@@ -28,8 +28,15 @@
             --confirm-btn-yes: #4caf50;
             --confirm-btn-no: #e74c3c;
             --warning-bg: #f39c12;
-        }
 
+            --accent-blue: #3498db;
+            --accent-blue-hover: #2980b9;
+            --accent-green: #27ae60;
+            --accent-red: #e74c3c;
+            --accent-red-hover: #c0392b;
+            --checkbox-bg: #ecf0f1;
+            --checkbox-checked: #27ae60;
+        }
         body.dark-mode {
             --bg-color: #1e1e1e;
             --text-color: #e0e0e0;
@@ -44,7 +51,7 @@
             --even-row: #333;
             --hover-row: #3a3a3a;
             --table-border: #444;
-            --history-bg: #333;
+            --history-bg: #2a2a2a;
             --history-border: #555;
             --popup-bg: #388e3c;
             --popup-text: #f0f0f0;
@@ -53,8 +60,15 @@
             --confirm-btn-yes: #388e3c;
             --confirm-btn-no: #c0392b;
             --warning-bg: #d68910;
-        }
 
+            --accent-blue: #5dade2;
+            --accent-blue-hover: #3498db;
+            --accent-green: #2ecc71;
+            --accent-red: #e74c3c;
+            --accent-red-hover: #c0392b;
+            --checkbox-bg: #444;
+            --checkbox-checked: #2ecc71;
+        }
         body {
             font-family: Arial, Helvetica, sans-serif;
             margin: 0;
@@ -67,7 +81,6 @@
             overflow: hidden;
             transition: background-color 0.3s, color 0.3s;
         }
-
         header {
             background-color: var(--header-bg);
             padding: 6px 12px 2px;
@@ -77,7 +90,6 @@
             justify-content: space-between;
             align-items: center;
         }
-
         h1 {
             margin: 0;
             padding: 0;
@@ -86,32 +98,27 @@
             color: var(--title-color);
             font-style: italic;
         }
-
         .header-right {
             display: flex;
             align-items: center;
             gap: 12px;
         }
-
         .auto-label {
             font-size: 0.9em;
             color: var(--text-color);
             user-select: none;
         }
-
         .theme-toggle {
             position: relative;
             display: inline-block;
             width: 56px;
             height: 28px;
         }
-
         .theme-toggle input {
             opacity: 0;
             width: 0;
             height: 0;
         }
-
         .slider {
             position: absolute;
             cursor: pointer;
@@ -129,22 +136,17 @@
             font-size: 16px;
             overflow: hidden;
         }
-
         .slider span {
             transition: opacity 0.3s;
             z-index: 1;
         }
-
         .slider .sun { opacity: 0; }
         .slider .moon { opacity: 1; }
-
         input:checked + .slider {
             background-color: #2196F3;
         }
-
         input:checked + .slider .sun { opacity: 1; }
         input:checked + .slider .moon { opacity: 0; }
-
         .slider:before {
             position: absolute;
             content: "";
@@ -157,11 +159,9 @@
             border-radius: 50%;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
-
         input:checked + .slider:before {
             transform: translateX(28px);
         }
-
         .hamburger {
             cursor: pointer;
             font-size: 1.2em;
@@ -170,13 +170,11 @@
             flex-direction: column;
             gap: 4px;
         }
-
         .hamburger div {
             width: 24px;
             height: 2px;
             background-color: var(--text-color);
         }
-
         #output-section {
             flex: 1;
             overflow-y: auto;
@@ -185,81 +183,141 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            align-content: start;          /* Key change: align items to the top */
+            align-content: start;
         }
-
         #history-panel {
-            position: absolute;
+            position: fixed;
             top: 0;
             right: 0;
-            width: 280px;
-            max-height: 100%;
-            overflow-y: auto;
+            width: 320px;
+            height: 100%;
             background-color: var(--history-bg);
             border-left: 1px solid var(--history-border);
-            padding: 10px;
-            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
-            display: none;
-            z-index: 20;
+            box-shadow: -8px 0 25px rgba(0,0,0,0.25);
+            padding: 12px 12px 16px;
+            overflow-y: auto;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 30;
         }
-
         #history-panel.show {
-            display: block;
+            transform: translateX(0);
         }
-
+        #history-panel h3 {
+            margin: 0 0 12px 0;
+            font-size: 1.05em;
+            color: var(--title-color);
+        }
         .history-item {
-            border-bottom: 1px solid var(--table-border);
-            padding: 8px 0;
-            cursor: pointer;
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            border-radius: 6px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--history-border);
+            transition: all 0.2s;
+            cursor: pointer;
         }
-
-        .history-item input {
-            margin-right: 8px;
-        }
-
         .history-item:hover {
             background-color: var(--hover-row);
+            transform: translateX(3px);
         }
-
-        .history-item .timestamp {
-            font-size: 0.8em;
-            color: gray;
+        .history-item.selected {
+            background-color: rgba(52, 152, 219, 0.12);
+            border-color: var(--accent-blue);
         }
-
-        .history-item .preview {
-            font-size: 0.85em;
+        .history-item-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .history-item input[type="checkbox"] {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            margin: 0;
+            border: 2px solid var(--text-color);
+            border-radius: 4px;
+            background-color: var(--checkbox-bg);
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+        .history-item input[type="checkbox"]:checked {
+            background-color: var(--checkbox-checked);
+            border-color: var(--checkbox-checked);
+        }
+        .history-item input[type="checkbox"]:checked::after {
+            content: "✔";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .history-item .title {
+            flex: 1;
+            font-size: 0.92em;
+            font-weight: 500;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-
         .history-actions {
             display: flex;
-            justify-content: space-between;
+            gap: 6px;
             margin-top: 4px;
         }
-
         .history-actions button {
-            font-size: 0.75em;
-            padding: 2px 6px;
+            flex: 1;
+            padding: 4px 8px;
+            font-size: 0.72em;
             border: none;
+            border-radius: 4px;
             cursor: pointer;
+            transition: all 0.2s;
         }
-
+        .view-btn {
+            background-color: var(--accent-blue);
+            color: white;
+        }
+        .view-btn:hover {
+            background-color: var(--accent-blue-hover);
+        }
         .delete-btn {
-            background-color: #e74c3c;
+            background-color: var(--accent-red);
             color: white;
         }
-
+        .delete-btn:hover {
+            background-color: var(--accent-red-hover);
+        }
         .delete-all, .delete-selected {
-            background-color: #c0392b;
-            color: white;
-            margin-top: 10px;
             width: 100%;
+            padding: 8px;
+            margin-top: 12px;
+            font-size: 0.9em;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-
+        .delete-selected {
+            background-color: var(--accent-red);
+        }
+        .delete-selected:hover {
+            background-color: var(--accent-red-hover);
+        }
+        .delete-all {
+            background-color: #c0392b;
+        }
+        .delete-all:hover {
+            background-color: #a93226;
+        }
         #input-section {
             padding: 8px;
             display: flex;
@@ -270,8 +328,8 @@
             border-top: 1px solid var(--header-border);
             flex-shrink: 0;
             z-index: 10;
+            gap: 8px;
         }
-
         textarea {
             flex: 1;
             height: 110px;
@@ -286,9 +344,7 @@
             white-space: pre;
             line-height: 1.4;
         }
-
         button {
-            margin-left: 8px;
             padding: 8px 18px;
             background-color: #2980b9;
             color: white;
@@ -299,15 +355,12 @@
             transition: background 0.2s;
             height: fit-content;
         }
-
         button:hover {
             background-color: #3498db;
         }
-
         .model-section {
             margin: 0;
         }
-
         .model-info {
             text-align: center;
             font-weight: bold;
@@ -321,7 +374,6 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
@@ -331,46 +383,37 @@
             overflow: hidden;
             font-size: 9.5px;
         }
-
         th, td {
             padding: 3px 5px;
             text-align: center;
             border-bottom: 1px solid var(--table-border);
         }
-
         th {
             background-color: #34495e;
             color: white;
             font-weight: bold;
             font-size: 9.5px;
         }
-
         td {
             font-size: 9.5px;
         }
-
         tr:nth-child(even) {
             background-color: var(--even-row);
         }
-
         tr:hover {
             background-color: var(--hover-row);
         }
-
         .signal {
             font-weight: bold;
             display: inline-flex;
             gap: 1px;
         }
-
         .signal span {
             min-width: 0.8em;
         }
-
         .B { color: #27ae60; }
         .S { color: #e74c3c; }
         .E { color: #f39c12; }
-
         .error {
             color: #e74c3c;
             text-align: center;
@@ -379,7 +422,34 @@
             font-size: 11px;
             grid-column: span 3;
         }
-
+        /* Status popups - bottom right - only for paste/arrange changes */
+        #unsaved-warning, #already-saved-info {
+            position: fixed;
+            bottom: 140px;
+            right: 16px;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 25;
+            display: none;
+            max-width: 280px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        #unsaved-warning {
+            background-color: var(--warning-bg);
+            color: white;
+        }
+        #already-saved-info {
+            background-color: var(--accent-green);
+            color: white;
+        }
+        #unsaved-warning.show, #already-saved-info.show {
+            display: block;
+            opacity: 1;
+        }
         #save-popup, #delete-popup {
             position: fixed;
             top: 50%;
@@ -396,7 +466,6 @@
             text-align: center;
             min-width: 220px;
         }
-
         #duplicate-popup {
             position: fixed;
             top: 50%;
@@ -413,7 +482,6 @@
             text-align: center;
             min-width: 220px;
         }
-
         #save-name-popup, #confirm-popup {
             position: fixed;
             top: 50%;
@@ -429,7 +497,6 @@
             width: 320px;
             text-align: center;
         }
-
         #save-name-input {
             width: 100%;
             padding: 8px;
@@ -440,19 +507,16 @@
             background-color: var(--input-bg);
             color: var(--text-color);
         }
-
         #confirm-message {
             margin-bottom: 16px;
             font-size: 1.05em;
         }
-
         #confirm-yes {
             background-color: var(--confirm-btn-yes);
             color: white;
             margin-right: 10px;
             padding: 8px 16px;
         }
-
         #confirm-no {
             background-color: var(--confirm-btn-no);
             color: white;
@@ -461,7 +525,6 @@
     </style>
 </head>
 <body class="dark-mode">
-
     <header>
         <h1>Mosong-Model Trading Stats Viewer</h1>
         <div class="header-right">
@@ -494,6 +557,10 @@
         <button id="saveBtn" onclick="promptSaveName()">Save Output</button>
     </div>
 
+    <!-- Status popups - only triggered on paste/arrange changes -->
+    <div id="unsaved-warning">Unsaved changes — click Save to keep</div>
+    <div id="already-saved-info">Already saved ✓</div>
+
     <div id="history-panel">
         <h3>Saved Outputs</h3>
         <div id="history-list"></div>
@@ -524,11 +591,32 @@
         let debounceTimer;
         let history = JSON.parse(localStorage.getItem('tradingHistory') || '[]');
         let selectedOrder = [];
+        let currentOutputHtml = '';
+
+        const unsavedPopup = document.getElementById('unsaved-warning');
+        const alreadySavedPopup = document.getElementById('already-saved-info');
+
+        function showUnsavedWarning() {
+            unsavedPopup.classList.add('show');
+            alreadySavedPopup.classList.remove('show');
+            setTimeout(() => unsavedPopup.classList.remove('show'), 5000);
+        }
+
+        function showAlreadySavedInfo() {
+            alreadySavedPopup.classList.add('show');
+            unsavedPopup.classList.remove('show');
+            setTimeout(() => alreadySavedPopup.classList.remove('show'), 4000);
+        }
+
+        function hideStatusPopups() {
+            unsavedPopup.classList.remove('show');
+            alreadySavedPopup.classList.remove('show');
+        }
 
         document.addEventListener('click', (e) => {
             const panel = document.getElementById('history-panel');
-            if (panel.classList.contains('show') && 
-                !panel.contains(e.target) && 
+            if (panel.classList.contains('show') &&
+                !panel.contains(e.target) &&
                 !document.querySelector('.hamburger').contains(e.target)) {
                 toggleHistory();
             }
@@ -539,18 +627,18 @@
             panel.classList.toggle('show');
             if (panel.classList.contains('show')) {
                 loadHistory();
+                hideStatusPopups();           // ← important: no status popup when opening history
             }
         }
 
         function promptSaveName() {
-            const outputHtml = document.getElementById('output-section').innerHTML;
-            if (!outputHtml.trim() || outputHtml === '<div id="error-message" class="error"></div>') {
+            const outputHtml = document.getElementById('output-section').innerHTML.trim();
+            if (!outputHtml || outputHtml === '<div id="error-message" class="error"></div>') {
                 alert('No output to save.');
                 return;
             }
 
-            // Check for duplicate content
-            const isDuplicate = history.some(item => item.html === outputHtml);
+            const isDuplicate = history.some(item => item.html.trim() === outputHtml);
             if (isDuplicate) {
                 showPopup('duplicate-popup');
                 return;
@@ -569,29 +657,25 @@
                 const name = input.value.trim() || 'Untitled';
                 const timestamp = new Date().toLocaleString();
                 const displayName = `${name} - ${timestamp}`;
-                
+
                 history.unshift({ name: displayName, html: outputHtml });
                 localStorage.setItem('tradingHistory', JSON.stringify(history));
                 popup.style.display = 'none';
                 showPopup('save-popup');
+
+                currentOutputHtml = outputHtml;
+                hideStatusPopups();
             };
 
             confirmBtn.onclick = saveHandler;
             cancelBtn.onclick = () => popup.style.display = 'none';
-
-            input.onkeypress = (e) => {
-                if (e.key === 'Enter') {
-                    saveHandler();
-                }
-            };
+            input.onkeypress = (e) => { if (e.key === 'Enter') saveHandler(); };
         }
 
         function showPopup(id) {
             const popup = document.getElementById(id);
             popup.style.display = 'block';
-            setTimeout(() => {
-                popup.style.display = 'none';
-            }, 2000);
+            setTimeout(() => popup.style.display = 'none', 2000);
         }
 
         function loadHistory() {
@@ -601,8 +685,10 @@
                 const div = document.createElement('div');
                 div.className = 'history-item';
                 div.innerHTML = `
-                    <input type="checkbox" class="history-checkbox" data-index="${index}">
-                    <div class="title">${item.name}</div>
+                    <div class="history-item-header">
+                        <input type="checkbox" class="history-checkbox" data-index="${index}">
+                        <div class="title">${item.name}</div>
+                    </div>
                     <div class="history-actions">
                         <button class="view-btn" onclick="viewHistory(${index})">View</button>
                         <button class="delete-btn" onclick="promptDelete(${index})">Delete</button>
@@ -615,45 +701,52 @@
             checkboxes.forEach(cb => {
                 const idx = parseInt(cb.dataset.index);
                 cb.checked = selectedOrder.includes(idx);
+                if (cb.checked) cb.closest('.history-item').classList.add('selected');
                 cb.addEventListener('change', handleCheckboxChange);
             });
         }
 
         function handleCheckboxChange(e) {
             const index = parseInt(e.target.dataset.index);
+            const item = e.target.closest('.history-item');
+
             if (e.target.checked) {
-                if (!selectedOrder.includes(index)) {
-                    selectedOrder.push(index);
-                }
+                if (!selectedOrder.includes(index)) selectedOrder.push(index);
+                item.classList.add('selected');
             } else {
                 selectedOrder = selectedOrder.filter(i => i !== index);
+                item.classList.remove('selected');
             }
+
             updateSelectedView();
+            // IMPORTANT: no status popup when checking/unchecking items
         }
 
         function updateSelectedView() {
-            if (selectedOrder.length === 0) {
-                return;
-            }
+            if (selectedOrder.length === 0) return;
             let combinedHtml = '';
-            selectedOrder.forEach(idx => {
-                combinedHtml += history[idx].html;
-            });
+            selectedOrder.forEach(idx => combinedHtml += history[idx].html);
             document.getElementById('output-section').innerHTML = combinedHtml;
+            currentOutputHtml = combinedHtml.trim();
+            // Do NOT call checkOutputStatus() here → no popup on selection/view
         }
 
         function viewHistory(index) {
             document.getElementById('output-section').innerHTML = history[index].html;
+            currentOutputHtml = history[index].html.trim();
+            selectedOrder = [];
+            // Do NOT call checkOutputStatus() here → no popup on view
             toggleHistory();
         }
 
         function promptDelete(index) {
-            showConfirm(`Are you sure you want to delete "${history[index].name}"?`, () => {
+            showConfirm(`Delete "${history[index].name}"?`, () => {
                 history.splice(index, 1);
                 localStorage.setItem('tradingHistory', JSON.stringify(history));
                 selectedOrder = selectedOrder.filter(i => i !== index);
                 loadHistory();
                 showPopup('delete-popup');
+                // Optional: checkOutputStatus() after delete if you want, but usually not needed
             });
         }
 
@@ -663,12 +756,9 @@
                 return;
             }
             const names = selectedOrder.map(idx => history[idx].name);
-            const namesStr = names.join(', ');
-            showConfirm(`Are you sure you want to delete these outputs: ${namesStr}?`, () => {
-                selectedOrder.sort((a, b) => b - a);
-                selectedOrder.forEach(idx => {
-                    history.splice(idx, 1);
-                });
+            showConfirm(`Delete: ${names.join(', ')}?`, () => {
+                selectedOrder.sort((a,b)=>b-a);
+                selectedOrder.forEach(idx => history.splice(idx, 1));
                 localStorage.setItem('tradingHistory', JSON.stringify(history));
                 selectedOrder = [];
                 loadHistory();
@@ -677,7 +767,7 @@
         }
 
         function promptDeleteAll() {
-            showConfirm('Are you sure you want to delete all outputs?', () => {
+            showConfirm('Delete ALL saved outputs?', () => {
                 history = [];
                 localStorage.setItem('tradingHistory', JSON.stringify(history));
                 selectedOrder = [];
@@ -688,45 +778,46 @@
 
         function showConfirm(message, callback) {
             const popup = document.getElementById('confirm-popup');
-            const msgEl = document.getElementById('confirm-message');
-            const yesBtn = document.getElementById('confirm-yes');
-            const noBtn = document.getElementById('confirm-no');
-
-            msgEl.textContent = message;
+            document.getElementById('confirm-message').textContent = message;
             popup.style.display = 'block';
+            document.getElementById('confirm-yes').onclick = () => { callback(); popup.style.display = 'none'; };
+            document.getElementById('confirm-no').onclick = () => popup.style.display = 'none';
+        }
 
-            yesBtn.onclick = () => {
-                callback();
-                popup.style.display = 'none';
-            };
-
-            noBtn.onclick = () => {
-                popup.style.display = 'none';
-            };
+        function checkOutputStatus() {
+            const outputHtml = document.getElementById('output-section').innerHTML.trim();
+            if (!outputHtml || outputHtml === '<div id="error-message" class="error"></div>') {
+                hideStatusPopups();
+                currentOutputHtml = '';
+                return;
+            }
+            const isSaved = history.some(item => item.html.trim() === outputHtml);
+            if (isSaved) {
+                showAlreadySavedInfo();
+            } else {
+                showUnsavedWarning();
+            }
+            currentOutputHtml = outputHtml;
         }
 
         function parseAndShowTables() {
             const input = document.getElementById('data-input').value.trim();
             const errorDiv = document.getElementById('error-message');
             const outputSection = document.getElementById('output-section');
-
             errorDiv.textContent = '';
             outputSection.innerHTML = '';
             outputSection.appendChild(errorDiv);
 
             if (!input) {
-                errorDiv.textContent = 'Please paste some data.';
+                hideStatusPopups();
+                currentOutputHtml = '';
                 return;
             }
 
             try {
-                let queue = input.split('\n')
-                    .map(l => l.trim())
-                    .filter(l => l.length > 0);
-
+                let queue = input.split('\n').map(l => l.trim()).filter(l => l.length > 0);
                 const displayHeaders = ['Open', 'Close', 'Hma_open', 'Hma_close', 'Signal'];
-
-                const titleRegex = /([a-zA-Z0-9_]+(?:\.keras)?\s*(?:\((?:pos\s*-?\d+)\)\s*\(Last Data:\s*\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}\)|\(Last Data:\s*\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}\)\s*\(pos\s*-?\d+\)))/i;
+                const titleRegex = /([a-zA-Z0-9_]+(?:\.keras)?\s*(?:\((?:pos\s*-?\d+)\)\s*\(Last Data:\s*\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}\)|\(Last Data:\s*\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}\)\s*\(pos\s*-?\d+\))|[A-Z]+ \d+H Bars: \d+ pos -?\d+ Last Data: \d{4}-\d{2}-\d{2} \d{2}:\d{2})/i;
 
                 let currentModel = null;
                 let currentData = [];
@@ -736,15 +827,10 @@
                     if (currentModel && currentData.length > 0) {
                         const existing = modelsData.get(currentModel);
                         if (existing) {
-                            if (existing.length !== currentData.length) {
-                                throw new Error(`Duplicate model "${currentModel}" with different data length`);
-                            }
+                            if (existing.length !== currentData.length) throw new Error(`Duplicate model "${currentModel}" with different length`);
                             for (let i = 0; i < existing.length; i++) {
-                                if (existing[i] !== currentData[i]) {
-                                    throw new Error(`Duplicate model "${currentModel}" with different data values`);
-                                }
+                                if (existing[i] !== currentData[i]) throw new Error(`Duplicate model "${currentModel}" with different values`);
                             }
-                            // If same, skip adding again
                         } else {
                             modelsData.set(currentModel, [...currentData]);
                         }
@@ -754,48 +840,47 @@
 
                 while (queue.length > 0) {
                     let line = queue.shift();
-
                     const match = line.match(titleRegex);
                     if (match) {
                         const title = match[0];
                         const before = line.substring(0, match.index).trim();
-                        if (before.length > 0 && currentModel) {
-                            currentData.push(before);
-                        }
+                        if (before.length > 0 && currentModel) currentData.push(before);
                         collectSection();
                         currentModel = title;
                         const after = line.substring(match.index + title.length).trim();
-                        if (after.length > 0) {
-                            queue.unshift(after);
-                        }
+                        if (after.length > 0) queue.unshift(after);
                     } else if (line.includes('Open') && line.includes('Close') && line.includes('Hma_')) {
                         // skip header
                     } else if (currentModel) {
-                        currentData.push(line);
+                        const values = line.split(/\s+/).filter(v => v !== '');
+                        if (values.length === 8 && values.every(v => !isNaN(parseFloat(v)))) {
+                            currentData.push(line);
+                        }
                     }
                 }
-
                 collectSection();
 
-                if (modelsData.size === 0) {
-                    throw new Error('No valid model sections or data rows found.');
-                }
+                if (modelsData.size === 0) throw new Error('No valid model sections or data rows found.');
 
-                // Now render the unique sections
+                const sortedEntries = Array.from(modelsData.entries()).sort((a, b) => {
+                    const getTimeframe = title => {
+                        const m = title.match(/(\d+)H/);
+                        return m ? parseInt(m[1]) : 0;
+                    };
+                    return getTimeframe(b[0]) - getTimeframe(a[0]);
+                });
+
                 let sectionCount = 0;
-                for (let [currentModel, currentData] of modelsData) {
+                for (let [model, data] of sortedEntries) {
                     sectionCount++;
                     const sectionDiv = document.createElement('div');
                     sectionDiv.className = 'model-section';
 
                     const infoDiv = document.createElement('div');
                     infoDiv.className = 'model-info';
-
-                    let shortTitle = currentModel || `Section ${sectionCount}`;
-                    if (currentModel) {
-                        shortTitle = currentModel.replace(/\s*\(Last Data:[^)]+\)/i, '').trim();
-                    }
-
+                    let shortTitle = model || `Section ${sectionCount}`;
+                    shortTitle = shortTitle.replace(/\s*\(Last Data:[^)]+\)/i, '').trim();
+                    shortTitle = shortTitle.replace(/Bars: \d+ pos -?\d+$/i, '').trim();
                     infoDiv.textContent = shortTitle;
                     sectionDiv.appendChild(infoDiv);
 
@@ -811,47 +896,26 @@
                     });
                     thead.appendChild(headerRow);
 
-                    currentData.forEach((line, idx) => {
+                    data.forEach((line, idx) => {
                         const values = line.split(/\s+/).filter(v => v !== '');
-                        if (values.length !== 8) {
-                            throw new Error(`Section "${shortTitle}": row ${idx + 1} has ${values.length} values (expected 8)`);
-                        }
+                        if (values.length !== 8) throw new Error(`Section "${shortTitle}": row ${idx+1} has ${values.length} values (expected 8)`);
 
-                        const openVal     = parseFloat(values[0]);
-                        const closeVal    = parseFloat(values[1]);
-                        const hmaOpenVal  = parseFloat(values[2]);
-                        const hmaCloseVal = parseFloat(values[3]);
+                        const openVal   = parseFloat(values[0]);
+                        const closeVal  = parseFloat(values[1]);
+                        const hmaOpen   = parseFloat(values[2]);
+                        const hmaClose  = parseFloat(values[3]);
 
-                        let ohlcSignal = 'E';
-                        if (closeVal > openVal) ohlcSignal = 'B';
-                        else if (closeVal < openVal) ohlcSignal = 'S';
-
-                        let hmaSignal = 'E';
-                        if (hmaCloseVal > hmaOpenVal) hmaSignal = 'B';
-                        else if (hmaCloseVal < hmaOpenVal) hmaSignal = 'S';
-
-                        const signal = ohlcSignal + hmaSignal;
-
-                        const displayValues = [values[0], values[1], values[2], values[3], signal];
+                        let ohlcSig = 'E'; if (closeVal > openVal) ohlcSig = 'B'; else if (closeVal < openVal) ohlcSig = 'S';
+                        let hmaSig  = 'E'; if (hmaClose > hmaOpen) hmaSig = 'B'; else if (hmaClose < hmaOpen) hmaSig = 'S';
 
                         const row = document.createElement('tr');
-                        displayValues.forEach((val, colIdx) => {
+                        [values[0], values[1], values[2], values[3], `${ohlcSig}${hmaSig}`].forEach((val, col) => {
                             const td = document.createElement('td');
-                            if (colIdx === 4) {
-                                const span1 = document.createElement('span');
-                                span1.textContent = ohlcSignal;
-                                span1.className = ohlcSignal;
-
-                                const span2 = document.createElement('span');
-                                span2.textContent = hmaSignal;
-                                span2.className = hmaSignal;
-
-                                const container = document.createElement('span');
-                                container.className = 'signal';
-                                container.appendChild(span1);
-                                container.appendChild(span2);
-
-                                td.appendChild(container);
+                            if (col === 4) {
+                                const span = document.createElement('span');
+                                span.className = 'signal';
+                                span.innerHTML = `<span class="${ohlcSig}">${ohlcSig}</span><span class="${hmaSig}">${hmaSig}</span>`;
+                                td.appendChild(span);
                             } else {
                                 td.textContent = val;
                             }
@@ -865,26 +929,26 @@
                     sectionDiv.appendChild(table);
                     outputSection.appendChild(sectionDiv);
                 }
+
+                currentOutputHtml = outputSection.innerHTML.trim();
+                checkOutputStatus();   // ← only here we trigger status popup
+
             } catch (err) {
                 errorDiv.textContent = 'Error: ' + err.message;
+                currentOutputHtml = outputSection.innerHTML.trim();
+                checkOutputStatus();
             }
         }
 
-        // Auto-arrange + debounce
         document.addEventListener('DOMContentLoaded', () => {
             const textarea = document.getElementById('data-input');
             const autoCheckbox = document.getElementById('autoArrange');
             const themeToggle = document.getElementById('themeSwitch');
             const body = document.body;
 
-            // Theme toggle
-            themeToggle.checked = false; // dark by default
+            themeToggle.checked = false;
+            themeToggle.addEventListener('change', () => body.classList.toggle('dark-mode', !themeToggle.checked));
 
-            themeToggle.addEventListener('change', () => {
-                body.classList.toggle('dark-mode', !themeToggle.checked);
-            });
-
-            // Auto-arrange logic
             function tryAutoArrange() {
                 if (autoCheckbox.checked) {
                     clearTimeout(debounceTimer);
@@ -892,25 +956,30 @@
                 }
             }
 
-            textarea.addEventListener('input', tryAutoArrange);
-            textarea.addEventListener('paste', (e) => {
+            textarea.addEventListener('input', () => {
+                tryAutoArrange();
+                if (textarea.value.trim()) {
+                    // We delay status check slightly so it doesn't fight with typing
+                    setTimeout(checkOutputStatus, 100);
+                } else {
+                    hideStatusPopups();
+                }
+            });
+
+            textarea.addEventListener('paste', e => {
                 setTimeout(() => {
-                    const value = textarea.value;
-                    if (value && !value.endsWith('\n')) {
-                        textarea.value = value + '\n';
+                    if (textarea.value && !textarea.value.endsWith('\n')) {
+                        textarea.value += '\n';
                         textarea.scrollTop = textarea.scrollHeight;
-                        textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
                     }
                     tryAutoArrange();
                 }, 0);
             });
 
-            // Initial newline
             textarea.value = '\n';
             textarea.focus();
             textarea.setSelectionRange(1, 1);
 
-            // Manual button
             document.getElementById('arrangeBtn').addEventListener('click', parseAndShowTables);
         });
     </script>
