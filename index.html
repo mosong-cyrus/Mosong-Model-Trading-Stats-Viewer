@@ -414,6 +414,9 @@
         .B { color: #27ae60; }
         .S { color: #e74c3c; }
         .E { color: #f39c12; }
+        .positive { color: #27ae60; }
+        .negative { color: #e74c3c; }
+        .neutral { color: #f39c12; }
         .error {
             color: #e74c3c;
             text-align: center;
@@ -529,6 +532,10 @@
         <h1>Mosong-Model Trading Stats Viewer</h1>
         <div class="header-right">
             <label class="auto-label">
+                <input type="checkbox" id="showCounts">
+                Counts
+            </label>
+            <label class="auto-label">
                 <input type="checkbox" id="autoArrange" checked>
                 Auto-arrange
             </label>
@@ -627,7 +634,7 @@
             panel.classList.toggle('show');
             if (panel.classList.contains('show')) {
                 loadHistory();
-                hideStatusPopups();           // ← important: no status popup when opening history
+                hideStatusPopups();
             }
         }
 
@@ -719,7 +726,6 @@
             }
 
             updateSelectedView();
-            // IMPORTANT: no status popup when checking/unchecking items
         }
 
         function updateSelectedView() {
@@ -728,14 +734,12 @@
             selectedOrder.forEach(idx => combinedHtml += history[idx].html);
             document.getElementById('output-section').innerHTML = combinedHtml;
             currentOutputHtml = combinedHtml.trim();
-            // Do NOT call checkOutputStatus() here → no popup on selection/view
         }
 
         function viewHistory(index) {
             document.getElementById('output-section').innerHTML = history[index].html;
             currentOutputHtml = history[index].html.trim();
             selectedOrder = [];
-            // Do NOT call checkOutputStatus() here → no popup on view
             toggleHistory();
         }
 
@@ -746,7 +750,6 @@
                 selectedOrder = selectedOrder.filter(i => i !== index);
                 loadHistory();
                 showPopup('delete-popup');
-                // Optional: checkOutputStatus() after delete if you want, but usually not needed
             });
         }
 
@@ -815,8 +818,15 @@
             }
 
             try {
+                const showCounts = document.getElementById('showCounts').checked;
+
                 let queue = input.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-                const displayHeaders = ['Open', 'Close', 'Hma_open', 'Hma_close', 'Signal'];
+                let displayHeaders = ['Open', 'Close', 'Hma_open', 'Hma_close'];
+                if (showCounts) {
+                    displayHeaders = displayHeaders.concat(['OHLC Buy Count', 'OHLC Sell Count', 'Features Buy Count', 'Features Sell Count']);
+                }
+                displayHeaders = displayHeaders.concat(['Signal', 'Buy_count', 'Sell_count', 'Net']);
+
                 const titleRegex = /([a-zA-Z0-9_]+(?:\.keras)?\s*(?:\((?:pos\s*-?\d+)\)\s*\(Last Data:\s*\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}\)|\(Last Data:\s*\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}\)\s*\(pos\s*-?\d+\))|[A-Z]+ \d+H Bars: \d+ pos -?\d+ Last Data: \d{4}-\d{2}-\d{2} \d{2}:\d{2})/i;
 
                 let currentModel = null;
@@ -904,17 +914,46 @@
                         const closeVal  = parseFloat(values[1]);
                         const hmaOpen   = parseFloat(values[2]);
                         const hmaClose  = parseFloat(values[3]);
+                        const ohlcBuyCount = parseInt(values[4]);
+                        const ohlcSellCount = parseInt(values[5]);
+                        const featuresBuyCount = parseInt(values[6]);
+                        const featuresSellCount = parseInt(values[7]);
 
                         let ohlcSig = 'E'; if (closeVal > openVal) ohlcSig = 'B'; else if (closeVal < openVal) ohlcSig = 'S';
                         let hmaSig  = 'E'; if (hmaClose > hmaOpen) hmaSig = 'B'; else if (hmaClose < hmaOpen) hmaSig = 'S';
 
+                        const buy_count = ohlcBuyCount + featuresBuyCount;
+                        const sell_count = ohlcSellCount + featuresSellCount;
+                        const net = buy_count - sell_count;
+
+                        const rowCells = [values[0], values[1], values[2], values[3]];
+                        if (showCounts) {
+                            rowCells.push(values[4], values[5], values[6], values[7]);
+                        }
+                        const signalStr = `${ohlcSig}${hmaSig}`;
+                        rowCells.push(signalStr, buy_count.toString(), sell_count.toString(), net.toString());
+
                         const row = document.createElement('tr');
-                        [values[0], values[1], values[2], values[3], `${ohlcSig}${hmaSig}`].forEach((val, col) => {
+                        rowCells.forEach((val, col) => {
                             const td = document.createElement('td');
-                            if (col === 4) {
+                            const signalCol = showCounts ? 8 : 4;
+                            const netCol = showCounts ? 11 : 7;
+
+                            if (col === signalCol) {
                                 const span = document.createElement('span');
                                 span.className = 'signal';
                                 span.innerHTML = `<span class="${ohlcSig}">${ohlcSig}</span><span class="${hmaSig}">${hmaSig}</span>`;
+                                td.appendChild(span);
+                            } else if (col === netCol) {
+                                const span = document.createElement('span');
+                                if (net > 0) {
+                                    span.className = 'positive';
+                                } else if (net < 0) {
+                                    span.className = 'negative';
+                                } else {
+                                    span.className = 'neutral';
+                                }
+                                span.textContent = val;
                                 td.appendChild(span);
                             } else {
                                 td.textContent = val;
@@ -931,7 +970,7 @@
                 }
 
                 currentOutputHtml = outputSection.innerHTML.trim();
-                checkOutputStatus();   // ← only here we trigger status popup
+                checkOutputStatus();
 
             } catch (err) {
                 errorDiv.textContent = 'Error: ' + err.message;
@@ -943,11 +982,18 @@
         document.addEventListener('DOMContentLoaded', () => {
             const textarea = document.getElementById('data-input');
             const autoCheckbox = document.getElementById('autoArrange');
+            const showCountsCheckbox = document.getElementById('showCounts');
             const themeToggle = document.getElementById('themeSwitch');
             const body = document.body;
 
             themeToggle.checked = false;
             themeToggle.addEventListener('change', () => body.classList.toggle('dark-mode', !themeToggle.checked));
+
+            showCountsCheckbox.addEventListener('change', () => {
+                if (textarea.value.trim()) {
+                    parseAndShowTables();
+                }
+            });
 
             function tryAutoArrange() {
                 if (autoCheckbox.checked) {
@@ -959,7 +1005,6 @@
             textarea.addEventListener('input', () => {
                 tryAutoArrange();
                 if (textarea.value.trim()) {
-                    // We delay status check slightly so it doesn't fight with typing
                     setTimeout(checkOutputStatus, 100);
                 } else {
                     hideStatusPopups();
